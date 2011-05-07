@@ -15,4 +15,20 @@
 
 #define MEMORY_BARRIER() __asm volatile( "" ::: "memory" )
 
+// There is a bug in the CLI function in older versions of
+// avr-libc - it should be defined to include a memory barrier.
+// The entry to a block enclosed by ATOMIC_BLOCK(ATOMIC_RESTORESTATE)
+// inherits this bug and consequenctly nees a memory barrier
+// the the start of each block. This macro is used to define
+// the barrier in the code so that it will be relatively 
+// easy to remove once the bug has become ancient history.
+// At the moment the bug is included in most of the distributed
+// compilers.
+
+#if __AVR_LIBC_VERSION__ < 10700UL
+	#define CLI_BUG_MEMORY_BARRIER() MEMORY_BARRIER()
+#else
+	#define CLI_BUG_MEMORY_BARRIER()
+#endif
+
 #endif
