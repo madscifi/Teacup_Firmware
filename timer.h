@@ -3,6 +3,7 @@
 
 #include	<stdint.h>
 #include	<avr/io.h>
+#include	"memory_barrier.h"
 
 // time-related constants
 #define	US	* (F_CPU / 1000000)
@@ -16,7 +17,19 @@ extern volatile uint8_t	clock_flag;
 #define	CLOCK_FLAG_10MS								1
 #define	CLOCK_FLAG_250MS							2
 #define	CLOCK_FLAG_1S									4
-#define	ifclock(F)	for (;clock_flag & (F);clock_flag &= ~(F))
+
+static inline void clear_clock_flag( uint8_t mask )
+{
+	ATOMIC_BLOCK(ATOMIC_RESTORESTATE)
+	{
+		CLI_BUG_MEMORY_BARRIER();
+		clock_flag &= ~ mask;
+	}
+}
+
+// If the specific bit is set, execute the following block exactly once
+// and then clear the flag.
+#define	ifclock(F)	for (uint8_t i=1; i>0 && clock_flag & (F); --i,clear_clock_flag(F) )
 
 /*
 timer stuff

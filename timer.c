@@ -46,20 +46,22 @@ ISR(TIMER1_COMPB_vect) {
 	*/
 	clock_counter_10ms += TICK_TIME_MS;
 	if (clock_counter_10ms >= 10) {
+		uint8_t local_clock_flag = clock_flag;
 		clock_counter_10ms -= 10;
-		clock_flag |= CLOCK_FLAG_10MS;
+		local_clock_flag |= CLOCK_FLAG_10MS;
 
 		clock_counter_250ms += 1;
 		if (clock_counter_250ms >= 25) {
 			clock_counter_250ms -= 25;
-			clock_flag |= CLOCK_FLAG_250MS;
+			local_clock_flag |= CLOCK_FLAG_250MS;
 
 			clock_counter_1s += 1;
 			if (clock_counter_1s >= 4) {
 				clock_counter_1s -= 4;
-				clock_flag |= CLOCK_FLAG_1S;
+				local_clock_flag |= CLOCK_FLAG_1S;
 			}
 		}
+		clock_flag = local_clock_flag;
 	}
 }
 
