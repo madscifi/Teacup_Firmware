@@ -36,6 +36,8 @@ uint8_t						clock_counter_1s = 0;
 /// flags to tell main loop when above have elapsed
 volatile uint8_t	clock_flag = 0;
 
+volatile uint8_t	timer1_compa_deferred_enable = 0;
+
 /// comparator B is the system clock, happens every TICK_TIME
 ISR(TIMER1_COMPB_vect) {
 	// set output compare register to the next clock tick
@@ -66,27 +68,36 @@ ISR(TIMER1_COMPB_vect) {
 }
 
 #ifdef	HOST
-void timer1_compa_isr(void) __attribute__ ((hot));
-void timer1_compa_isr() {
-	// led on
-	WRITE(SCK, 1);
-
-	// disable this interrupt. if we set a new timeout, it will be re-enabled when appropriate
-	TIMSK1 &= ~MASK(OCIE1A);
-
-	// stepper tick
-	queue_step();
-
-	// led off
-	WRITE(SCK, 0);
-}
 
 /// comparator A is the step timer. It has higher priority then B.
 ISR(TIMER1_COMPA_vect) {
 	// Check if this is a real step, or just a next_step_time "overflow"
 	if (next_step_time < 65536) {
 		// step!
-		timer1_compa_isr();
+		WRITE(SCK, 1);
+
+		// disable this interrupt. if we set a new timeout, it will be re-enabled when appropriate
+		TIMSK1 &= ~MASK(OCIE1A);
+		timer1_compa_deferred_enable = 0;
+		
+		// stepper tick
+		queue_step();
+
+		// led off
+		WRITE(SCK, 0);
+		
+		// Enable the timer1_compa interrupt, if needed, 
+		// but only do it after disabling global interrupts.
+		// This will cause push any possible timer1a interrupt
+		// to the far side of the return, protecting the 
+		// stack from recursively clobbering memory.
+		
+		cli();
+		CLI_BUG_MEMORY_BARRIER();
+		
+		if (timer1_compa_deferred_enable) {
+			TIMSK1 |= MASK(OCIE1A);
+		}
 		return;
 	}
 
@@ -166,18 +177,14 @@ void setTimer(uint32_t delay)
 			OCR1A = step_start;
 		}
 
-		// The following is somewhat of a problem. This function is called
-		// from at least one place where additional work must be done after
-		// this function returns but before the timer interrupt occurs again.
-		// By returning with the timer interrupt enabled this requirement
-		// can be violated. A good fix is not yet clear, but the flaw should
-		// be noted.
+		// Defer the enabling of the timer1_CompA interrupts.
 		
-		TIMSK1 |= MASK(OCIE1A);
+		timer1_compa_deferred_enable = 1;
 	} else {
 		// flag: move has ended
 		next_step_time = 0;
 		TIMSK1 &= ~MASK(OCIE1A);
+		timer1_compa_deferred_enable = 0;
 	}
 
 	// restore interrupt flag

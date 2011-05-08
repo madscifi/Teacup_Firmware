@@ -13,6 +13,7 @@
 clock stuff
 */
 extern volatile uint8_t	clock_flag;
+extern volatile uint8_t	timer1_compa_deferred_enable;
 
 #define	CLOCK_FLAG_10MS								1
 #define	CLOCK_FLAG_250MS							2

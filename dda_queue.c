@@ -125,8 +125,16 @@ void enqueue(TARGET *t) {
 		isdead = (movebuffer[mb_tail].live == 0);
 	}
 	
-	if (isdead)
+	if (isdead) {
+		timer1_compa_deferred_enable = 0;
 		next_move();
+		if (timer1_compa_deferred_enable) {
+			ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
+				CLI_BUG_MEMORY_BARRIER();
+				TIMSK1 |= MASK(OCIE1A);
+			}
+		}
+	}	
 }
 
 /// go to the next move.
@@ -157,10 +165,10 @@ void next_move() {
 		else {
 			dda_start(current_movebuffer);
 		}
-		
 	} 
 	if (queue_empty())
 		setTimer(0);
+		
 }
 
 /// DEBUG - print queue.
