@@ -25,7 +25,7 @@
 #define		TICK_TIME_MS	(TICK_TIME / (F_CPU / 1000))
 
 /// time until next step, as output compare register is too small for long step times
-volatile uint32_t	next_step_time;
+uint32_t	next_step_time;
 
 /// every time our clock fires, we increment this so we know when 10ms has elapsed
 uint8_t						clock_counter_10ms = 0;
@@ -124,9 +124,11 @@ void setTimer(uint32_t delay)
 	// save interrupt flag
 	uint8_t sreg = SREG;
 	uint16_t step_start = 0;
+	
 	// disable interrupts
 	cli();
-
+	CLI_BUG_MEMORY_BARRIER();
+	
 	// re-enable clock interrupt in case we're recovering from emergency stop
 	TIMSK1 |= MASK(OCIE1B);
 
@@ -172,6 +174,7 @@ void setTimer(uint32_t delay)
 	}
 
 	// restore interrupt flag
+	MEMORY_BARRIER();
 	SREG = sreg;
 }
 
