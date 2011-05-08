@@ -166,6 +166,13 @@ void setTimer(uint32_t delay)
 			OCR1A = step_start;
 		}
 
+		// The following is somewhat of a problem. This function is called
+		// from at least one place where additional work must be done after
+		// this function returns but before the timer interrupt occurs again.
+		// By returning with the timer interrupt enabled this requirement
+		// can be violated. A good fix is not yet clear, but the flaw should
+		// be noted.
+		
 		TIMSK1 |= MASK(OCIE1A);
 	} else {
 		// flag: move has ended
