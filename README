@@ -1,3 +1,13 @@
+Note: This branch, interrupt-fixes-current, addresses a variety
+of interrupt and volatile issues and includes some small flash 
+memory size reductions.
+
+It will NOT work with the Arduino compiler as it depends on
+features of C99 (specifically the ability to define a variable
+within the initial clause of a for statement).
+
+I'm currently working on a branch to support the Arduino compiler.
+
 ##############################################################################
 #                                                                            #
 # Teacup (formely FiveD on Arduino) firmware                                 #
