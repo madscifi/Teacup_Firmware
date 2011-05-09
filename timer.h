@@ -12,25 +12,14 @@
 /*
 clock stuff
 */
-extern volatile uint8_t	clock_flag;
+extern volatile uint8_t	clock_flag_10ms;
+extern volatile uint8_t	clock_flag_250ms;
+extern volatile uint8_t	clock_flag_1s;
 extern volatile uint8_t	timer1_compa_deferred_enable;
-
-#define	CLOCK_FLAG_10MS								1
-#define	CLOCK_FLAG_250MS							2
-#define	CLOCK_FLAG_1S									4
-
-static inline void clear_clock_flag( uint8_t mask )
-{
-	ATOMIC_BLOCK(ATOMIC_RESTORESTATE)
-	{
-		CLI_BUG_MEMORY_BARRIER();
-		clock_flag &= ~ mask;
-	}
-}
 
 // If the specific bit is set, execute the following block exactly once
 // and then clear the flag.
-#define	ifclock(F)	for (uint8_t i=1; i>0 && clock_flag & (F); --i,clear_clock_flag(F) )
+#define	ifclock(F)	for (uint8_t i=1; i>0 && F; --i,F=0 )
 
 /*
 timer stuff
