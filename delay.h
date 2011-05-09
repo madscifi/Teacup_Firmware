@@ -7,7 +7,7 @@
 #include	<math.h>
 
 // WAITING_DELAY is expressed in microseconds
-#define		WAITING_DELAY		10000
+#define		WAITING_DELAY		100
 
 // Force delay functions to be inlined. 
 // Otherwise they will not work correctly. 
